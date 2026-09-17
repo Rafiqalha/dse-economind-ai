@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import streamlit as st
-import pandas as pd
-import joblib
+
+from portable_forest import load_portable_forest
 
 
 # ============================================================
@@ -20,7 +22,8 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model():
-    return joblib.load("model_ekonomi_1m.joblib")
+    model_path = Path(__file__).with_name("model_ekonomi_1m.joblib")
+    return load_portable_forest(model_path)
 
 
 model = load_model()
@@ -129,29 +132,16 @@ if st.button(
     use_container_width=True
 ):
 
-    input_data = pd.DataFrame(
-        [{
-            "Biaya_Produksi_Per_Unit":
-                biaya_produksi,
+    input_data = [
+        biaya_produksi,
+        inflasi,
+        kompetitor,
+        dict_permintaan[permintaan],
+        dict_kelangkaan[kelangkaan],
+        dict_sentimen[sentimen],
+    ]
 
-            "Persentase_Inflasi_Daerah":
-                inflasi,
-
-            "Jumlah_Kompetitor_Aktif":
-                kompetitor,
-
-            "Tren_Permintaan_Konsumen":
-                dict_permintaan[permintaan],
-
-            "Kelangkaan_Bahan_Baku":
-                dict_kelangkaan[kelangkaan],
-
-            "Sentimen_Media_Sosial":
-                dict_sentimen[sentimen]
-        }]
-    )
-
-    hasil = model.predict(input_data)[0]
+    hasil = model.predict_one(input_data)
 
     st.divider()
 
